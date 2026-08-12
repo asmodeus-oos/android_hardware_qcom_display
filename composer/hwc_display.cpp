@@ -988,7 +988,8 @@ HWC2::Error HWCDisplay::SetPowerMode(HWC2::PowerMode mode, bool teardown) {
           current_power_mode_ == HWC2::PowerMode::DozeSuspend)) {
         return HWC2::Error::None;
       }
-      RestoreColorTransform();
+      // Night Light / PCC must be restored *after* SetDisplayState below.
+      // Restoring here is lost when the panel powers on (cold flash on wake).
       state = kStateOn;
       break;
     case HWC2::PowerMode::Doze:
@@ -997,7 +998,6 @@ HWC2::Error HWCDisplay::SetPowerMode(HWC2::PowerMode mode, bool teardown) {
           current_power_mode_ == HWC2::PowerMode::DozeSuspend)) {
         return HWC2::Error::None;
       }
-      RestoreColorTransform();
       state = kStateDoze;
       break;
     case HWC2::PowerMode::DozeSuspend:
@@ -1013,6 +1013,11 @@ HWC2::Error HWCDisplay::SetPowerMode(HWC2::PowerMode mode, bool teardown) {
 
   if (error == kErrorNone) {
     flush_on_error_ = flush_on_error;
+    // Re-apply cached color transform after the panel is actually on/doze.
+    // Doing this before SetDisplayState loses Night Light PCC on power-up.
+    if (mode == HWC2::PowerMode::On || mode == HWC2::PowerMode::Doze) {
+      RestoreColorTransform();
+    }
   } else {
     if (error == kErrorShutDown) {
       shutdown_pending_ = true;
