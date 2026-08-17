@@ -1445,9 +1445,14 @@ void HWDeviceDRM::SetupAtomic(Fence::ScopedRef &scoped_ref, HWLayersInfo *hw_lay
     uint32_t mask_state = 0;
 
     for (uint32_t i = 0; i < hw_layer_count; i++) {
-      const std::string &name = hw_layers_info->hw_layers[i].layer_name;
+      Layer &layer = hw_layers_info->hw_layers.at(i);
+      const std::string &name = layer.layer_name;
       if (name.find(UDFPS_DIM_LAYER_NAME) != std::string::npos) {
-        mask_state |= OPLUS_OFP_PROPERTY_DIM_LAYER;
+        // Alpha 0 still matches the layer name. Ignore it so idle lockscreen
+        // does not assert DIM_LAYER / panel HBM.
+        if (layer.plane_alpha > 0) {
+          mask_state |= OPLUS_OFP_PROPERTY_DIM_LAYER;
+        }
       } else if (name.find(UDFPS_TOUCHED_LAYER_NAME) != std::string::npos) {
         mask_state |= OPLUS_OFP_PROPERTY_FINGERPRESS_LAYER;
       }
