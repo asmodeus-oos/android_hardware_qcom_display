@@ -740,7 +740,11 @@ void HWCDisplay::BuildLayerStack() {
     // them from the layers it programs on the hardware.
     const std::string &name = hwc_layer->GetName();
     if (name.find(UDFPS_DIM_LAYER_NAME) != std::string::npos) {
-      layer_stack_.flags.ofp_dim_layer_present = true;
+      // Alpha 0 still matches the layer name. Ignore it so idle lockscreen
+      // does not assert DIM_LAYER / panel HBM.
+      if (layer->plane_alpha > 0) {
+        layer_stack_.flags.ofp_dim_layer_present = true;
+      }
     } else if (name.find(UDFPS_TOUCHED_LAYER_NAME) != std::string::npos) {
       layer_stack_.flags.ofp_fingerpress_layer_present = true;
     }
